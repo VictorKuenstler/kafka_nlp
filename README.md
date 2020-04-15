@@ -55,7 +55,7 @@ faust -A src.loader worker -l info
 ```
 
 
-## NLP Stream Application
+### NLP Stream Processor
 
 Start:
 
