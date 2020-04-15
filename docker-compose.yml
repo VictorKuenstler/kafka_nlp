@@ -1,0 +1,33 @@
+version: "3.7"
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_offsets_topic_replication_factor: 1
+      KAFKA_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CREATE_TOPICS: "InputAWS:1:1,Documents:1:1,TFIDFScore:1:1,TermFrequencies:1:1,MostImportantTerm:1:1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  localstack:
+    image: localstack/localstack
+    container_name: localstack_service
+    ports:
+      - "4567-4584:4567-4584"
+      - "8055:8080"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - /var/run/docker.sock:/va90r/run/docker.sock
