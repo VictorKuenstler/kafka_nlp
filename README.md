@@ -6,12 +6,12 @@ The example consists of three different applications:
 
 * **Producer**: Loads files from a local source directory, uploads them to S3, and sends a record with the corresponding S3 pointer to a specific Kafka topic.
 * **Loader**: Stream processor that processes the records produced by the **Producer**, loads the content of the files from S3, and uses [faust-s3-backed-serializer](https://github.com/bakdata/faust-s3-backed-serializer) for serialization.
-* **NLP-Stream Processor**: Stream processor that processes the records produced by the **Loader**. It calculates the TF-IDF score for all recognized named entities in incoming documents.
+* **NLP-Stream Processor**: Stream processor that processes the records produced by the **Loader**. Extracts named entities with spaCy, filters for entities labeled with "PERSON", and calculates the corresponding TF-IDF score in incoming documents.
 
 ## Example
 
 The example uses a S3 mock for testing the application locally.
-Start kafka and a s3 mock for testing locally:
+Start Kafka and a s3 mock for testing locally:
 
 ```
 docker-compose up
