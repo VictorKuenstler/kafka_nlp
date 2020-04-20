@@ -1,5 +1,5 @@
 # NLP processing example in Kafka with spaCy 
-![Pytest](https://github.com/VictorKuenstler/kafka_nlp/workflows/Python%20application/badge.svg?branch=master)
+![Pytest](https://github.com/VictorKuenstler/kafka_nlp/workflows/Pytest/badge.svg?branch=master)
 
 A pipeline that utilizes the [faust-s3-backed-serializer](https://github.com/bakdata/faust-s3-backed-serializer) to process large text files in Kafka and runs the spaCy named entity recognition for persons and organizations. Finally, it computes the frequency of every named entity per document, the TF-IDF score, and extracts the most important named entity for every document.
 
