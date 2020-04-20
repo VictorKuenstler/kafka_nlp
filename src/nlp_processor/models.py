@@ -5,6 +5,7 @@ class TermFrequency(faust.Record):
     document: str
     term: str
     tf: float
+    inverse_document: int
     document_count: int
 
 

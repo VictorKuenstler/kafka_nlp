@@ -38,6 +38,7 @@ async def aws_urls(input):
         text = object_metadata["Body"].read().decode()
         logging.info(f'Load file {url.decode()}')
         await OUTPUT_TOPIC.send(key=url.decode(), value=text, value_serializer=s3_backed_serializer)
+        yield text
 
 
 if __name__ == '__main__':

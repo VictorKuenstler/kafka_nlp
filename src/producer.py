@@ -16,6 +16,10 @@ def on_send_error(excp):
     logging.error('Failed to send message', exc_info=excp)
 
 
+def on_send_success(message, record_metadata):
+    print(f'Add file {message}')
+
+
 @click.command()
 @click.option('--broker_url', help='Kafka broker url', required=True)
 @click.option('--data_path', help='Path to the data', required=True)
@@ -44,7 +48,7 @@ def start_producer(broker_url, data_path, s3_bucket, s3_bucket_dir, output_topic
         s3_client.upload_file(file, s3_bucket, key)
         message = f's3://{s3_bucket}/{key}'.encode()
         producer.send(output_topic, key=message, value=message) \
-            .add_callback(logging.info(f'Send message for file {file}')) \
+            .add_callback(on_send_success, file) \
             .add_errback(on_send_error)
         sleep(2)
 

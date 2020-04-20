@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import math
@@ -10,7 +11,6 @@ from src.nlp_processor.processor import process_document
 from src.nlp_processor.models import TFIDF_Score, TermFrequency
 from src.utils import S3BackedSerializerEndpoint
 
-
 S3_ENDPOINT = 'http://localhost:4572'
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,6 @@ s3_backed_serializer = S3BackedSerializerEndpoint(base_path="s3://data",
                                                   max_size=0,
                                                   is_key=False,
                                                   s3endpoint_url=S3_ENDPOINT)
-
 
 app = faust.App('loader', broker=os.getenv('KAFKA_BROKER_URL'), stream_wait_empty=False)
 
@@ -53,25 +52,24 @@ async def documents(stream):
         for term in tf.keys():
             document_frequency[term] += 1
             named_entities[term] += tf[term]
-            await tf_topic.send(key=key, value={
-                'document': key,
-                'term': term,
-                'tf': tf[term] / num_ents,
-                'document_count': document_frequency[term]
-            })
+            value = TermFrequency(document=key, term=term, tf=tf[term] / num_ents,
+                                  inverse_document=document_frequency[term],
+                                  document_count=document_count[DOCUMENTS_KEY])
+            await tf_topic.send(key=key, value=value)
+            yield value
 
 
 @app.agent(tf_topic)
-async def tf_idf(stream):
+async def tf_idf(stream: faust.Stream[TermFrequency]):
     async for key, tf in stream.items():
         doc_freq = document_frequency[tf.term]
-        doc_freq = float(max(doc_freq, tf.document_count))
-        idf: float = math.log(float(document_count[DOCUMENTS_KEY]) / doc_freq)
-        await tfidf_score_topic.send(key=key, value={
-            'document': tf.document,
-            'tfidf': tf.tf * idf,
-            'term': tf.term
-        })
+        doc_freq = float(max(doc_freq, tf.inverse_document))
+        num_documents = max(float(document_count[DOCUMENTS_KEY]), tf.document_count)
+        idf: float = math.log(num_documents / doc_freq)
+        value = TFIDF_Score(document=tf.document, tfidf=tf.tf * idf, term=tf.term)
+
+        await tfidf_score_topic.send(key=key, value=value)
+        yield value
 
 
 @app.agent(tfidf_score_topic)
@@ -83,11 +81,11 @@ async def out(stream: faust.Stream[TFIDF_Score]):
             logging.info(
                 f'Update the most important term for document {document_tfs.document} with term: {document_tfs.term}'
             )
-            await most_important_term.send(key=key, value={
-                'document': document_tfs.document,
-                'tfidf': document_tfs.tfidf,
-                'term': document_tfs.term,
-            })
+            value = TFIDF_Score(document=document_tfs.document, tfidf=document_tfs.tfidf, term=document_tfs.term)
+            await most_important_term.send(key=key, value=value)
+            yield 1
+        yield 0
+
 
 if __name__ == '__main__':
     app.main()
