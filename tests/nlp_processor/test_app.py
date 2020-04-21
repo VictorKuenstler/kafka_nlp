@@ -56,7 +56,7 @@ async def test_documents(test_app, test_document):
 
 @pytest.mark.asyncio()
 async def test_tf_idf(test_app):
-    s3_path = 's3://testbucket/test.txt'.encode()
+    s3_path = 's3://testbucket/test.txt'
 
     term = 'John Doe'
     tf = 0.33
